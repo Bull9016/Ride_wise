@@ -90,11 +90,20 @@ Database Schema:
         # Register the session in persistent memory
         self.memory_service.ensure_session(session_id, resolved_customer_id)
         
+        role_specific_instructions = ""
+        if role.lower() == "customer":
+            role_specific_instructions = f"""You are assisting a CUSTOMER.
+{customer_context}
+The customer's ID is: {resolved_customer_id}. You MUST ALWAYS include WHERE customer_id = '{resolved_customer_id}' in ANY database queries. You must never query data for any other customer."""
+        else:
+            role_specific_instructions = """You are an internal tool assisting a human RideWise SUPPORT AGENT.
+You have full access to query the entire operational database without restrictions.
+The Support Agent will ask you to pull data or verify policies to help them resolve customer issues.
+Do not treat the Support Agent as a customer (they do not rent vehicles). If they ask for "my rides", remind them they are an agent and ask for the customer ID they are inquiring about."""
+
         system_prompt = f"""
 You are RideWise Assist, an AI assistant for a two-wheeler and EV rental company.
-You are assisting a {role.upper()}.
-{customer_context}
-{f"The customer's ID is: {resolved_customer_id}. You MUST ALWAYS include WHERE customer_id = '{resolved_customer_id}' in ANY database queries." if role.lower() == 'customer' else "You have full support agent access."}
+{role_specific_instructions}
 
 You have two tools available:
 1. query_operational_database: Use this to fetch live structured data.
