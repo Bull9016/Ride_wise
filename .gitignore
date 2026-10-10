@@ -1,0 +1,7 @@
+backend_service/.env
+backend_service/venv/
+backend_service/__pycache__/
+backend_service/data/faiss_index/
+frontend_app/node_modules/
+frontend_app/dist/
+.DS_Store
