@@ -54,10 +54,6 @@ async def chat_endpoint(request: ChatRequest):
                 raise HTTPException(status_code=401, detail="Both Customer ID and Mobile Number are required for login.")
             if not db_service.verify_credentials(request.customer_id, request.mobile_number):
                 raise HTTPException(status_code=401, detail="Invalid Customer ID or Mobile Number. Authentication failed.")
-                
-        elif request.role.lower() == "support agent":
-            if request.customer_id != "ADMIN" or request.mobile_number != "secret123":
-                raise HTTPException(status_code=401, detail="Invalid Agent ID or Password. Authentication failed.")
             
         answer = orchestrator.chat(
             user_message=request.message,

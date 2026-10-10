@@ -28,10 +28,6 @@ function App() {
       alert("Please enter both your Customer ID and Mobile Number.");
       return;
     }
-    if (role === 'Support Agent' && (!customerId.trim() || !mobileNumber.trim())) {
-      alert("Please enter your Agent ID and Password.");
-      return;
-    }
     setIsLoggedIn(true);
     setSessionId(crypto.randomUUID());
     setMessages([]);
@@ -121,7 +117,7 @@ function App() {
                 </div>
               </div>
 
-              {role === 'Customer' ? (
+              {role === 'Customer' && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-slate-300">Customer ID</label>
@@ -141,29 +137,6 @@ function App() {
                       value={mobileNumber}
                       onChange={(e) => setMobileNumber(e.target.value)}
                       className="w-full bg-slate-900/50 border border-slate-700/50 focus:border-emerald-500 text-slate-100 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-slate-600 focus:ring-2 focus:ring-emerald-500/20"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Agent ID</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. ADMIN"
-                      value={customerId}
-                      onChange={(e) => setCustomerId(e.target.value)}
-                      className="w-full bg-slate-900/50 border border-indigo-700/50 focus:border-indigo-500 text-slate-100 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-slate-600 focus:ring-2 focus:ring-indigo-500/20"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">Password</label>
-                    <input
-                      type="password"
-                      placeholder="Enter password"
-                      value={mobileNumber}
-                      onChange={(e) => setMobileNumber(e.target.value)}
-                      className="w-full bg-slate-900/50 border border-indigo-700/50 focus:border-indigo-500 text-slate-100 rounded-xl px-4 py-3 outline-none transition-all placeholder:text-slate-600 focus:ring-2 focus:ring-indigo-500/20"
                     />
                   </div>
                 </div>
