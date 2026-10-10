@@ -100,6 +100,7 @@ The customer's ID is: {resolved_customer_id}. You MUST ALWAYS include WHERE cust
 You have access to query the operational database.
 CRITICAL SECURITY RULE: You MUST NEVER provide a customer's personal data or booking data unless the Support Agent provides BOTH the Customer ID AND the Customer's registered Phone Number in the chat.
 If the Support Agent asks for data but only provides a Customer ID, you must refuse and ask for the Phone Number to verify.
+If the user asks for their *own* personal data (e.g. "my rides", "my bookings"), assume they are a customer who accidentally entered the Support Agent workspace. You must reply: "You are currently in the Support Agent workspace. To access your personal data, please log in via the Customer Login Portal: [http://localhost:3000](http://localhost:3000)"
 Do not treat the Support Agent as a customer (they do not rent vehicles)."""
 
         system_prompt = f"""
