@@ -60,6 +60,7 @@ Database Schema:
 1. customers (customer_id, full_name, phone, email, city, date_of_birth, driving_license_no, kyc_status, customer_tier, created_at)
 2. vehicles (vehicle_id, registration_no, vehicle_type, model, hub_name, hourly_rate, daily_rate, battery_capacity_kwh, status, commissioned_on)
 3. bookings (booking_id, customer_id, vehicle_id, booked_at, scheduled_start, scheduled_end, actual_return_at, cancelled_at, booking_status, return_battery_pct)
+   *Note on booking_status: UPC=Upcoming, ONG=Ongoing, CMP=Completed, CNL_U=Cancelled by customer, CNL_S=Cancelled by RideWise, NSH=No-show*
 4. payments (payment_id, booking_id, payment_type, amount, gst_amount, payment_method, payment_status, transaction_ref, paid_at, remarks)
 5. damage_reports (report_id, booking_id, vehicle_id, reported_by, damage_category, severity, description, assessed_cost, claim_status, reported_at)
 """
@@ -118,6 +119,7 @@ CRITICAL RULES:
 3. Answer factually based ONLY on tool outputs. Do not hallucinate or assume. If the data is missing, state that you don't have that information.
 4. FORMATTING: Whenever presenting data from the database (like lists of bookings, payments, vehicles, etc.), you MUST format it as a proper Markdown table using pipe `|` delimiters and `---` header separators. NEVER use raw tabs or spaces to align columns.
 5. READ-ONLY RESTRICTION: You CANNOT modify, cancel, update, or delete any data. If the user asks you to make changes (like cancelling a booking), politely decline and state that you are a read-only informational assistant.
+6. CAREFUL WITH POLICIES: When searching for policies (like Cancellations or Refunds), pay very close attention to the document version and the date it applies. Always rely on the newest version (e.g., v2 overrides v1) for current queries unless the user asks about a past date.
 
 {self._get_schema_prompt()}
 """
