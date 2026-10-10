@@ -35,6 +35,7 @@ function App() {
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setRole('Customer');
     setCustomerId('');
     setMobileNumber('');
     setMessages([]);
@@ -109,7 +110,12 @@ function App() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setRole('Support Agent')}
+                    onClick={() => {
+                      setRole('Support Agent');
+                      setIsLoggedIn(true);
+                      setSessionId(crypto.randomUUID());
+                      setMessages([]);
+                    }}
                     className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all ${role === 'Support Agent' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-200'}`}
                   >
                     Support Agent
