@@ -52,8 +52,16 @@ npm run dev
 
 ### 4. Access the Application
 Open your browser to the URL provided by Vite (usually `http://localhost:5173` or `http://localhost:3000`).
-* **Customer Mode:** Requires a valid `Customer ID` and `Mobile Number` (e.g., `CUST0001` and `9876543210`). 
-* **Support Agent Mode:** Password-less entry, but strictly enforces in-chat 2FA before executing operational SQL queries on behalf of users.
+
+**Customer Mode:** Requires a valid `Customer ID` and `Mobile Number`. Here are some valid test credentials from the local database:
+
+| Customer Name | Customer ID | Mobile Number |
+|--------------|-------------|---------------|
+| Aarav Sharma | `CUST0001`  | `9845012345`  |
+| Priya Nair   | `CUST0002`  | `9886023456`  |
+| Rohan Gowda  | `CUST0003`  | `9741034567`  |
+
+**Support Agent Mode:** Password-less entry, but strictly enforces **in-chat 2FA** before executing operational SQL queries on behalf of users. When asked for data, the Agent LLM will demand the customer's mobile number in the chat prompt.
 
 ## 🔐 Security Features
 
