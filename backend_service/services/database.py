@@ -52,3 +52,19 @@ class DatabaseService:
         if results:
             return results[0].get("customer_id")
         return None
+
+    def verify_credentials(self, customer_id: str, phone: str) -> bool:
+        """
+        Strictly verifies that the provided customer_id matches the provided phone number.
+        """
+        if not customer_id or not phone:
+            return False
+        customer_id = customer_id.strip()
+        phone = phone.strip()
+        query = f"SELECT 1 FROM customers WHERE customer_id = '{customer_id}' AND phone = '{phone}' LIMIT 1;"
+        try:
+            results = self.execute_query(query)
+            return len(results) > 0
+        except Exception as e:
+            logger.error(f"Error verifying credentials: {e}")
+            return False

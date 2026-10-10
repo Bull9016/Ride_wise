@@ -3,8 +3,10 @@ import axios from 'axios';
 import { marked } from 'marked';
 
 function App() {
+  const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
   const [role, setRole] = useState('Customer');
-  const [identifier, setIdentifier] = useState('');
+  const [customerId, setCustomerId] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,8 +24,8 @@ function App() {
     e.preventDefault();
     if (!input.trim()) return;
 
-    if (role === 'Customer' && !identifier.trim()) {
-      alert("Please enter your Mobile Number or Customer ID first.");
+    if (role === 'Customer' && (!customerId.trim() || !mobileNumber.trim())) {
+      alert("Please enter both your Customer ID and Mobile Number.");
       return;
     }
 
@@ -33,17 +35,12 @@ function App() {
     setIsLoading(true);
 
     try {
-      // Map previous messages to OpenAI format for context awareness
-      const chatHistory = messages
-        .filter(m => m.sender === 'user' || m.sender === 'agent')
-        .map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.text }));
-
       const payload = {
         role: role,
         message: input,
-        history: chatHistory,
-        mobile_number: identifier.length === 10 && !isNaN(identifier) ? identifier : null,
-        customer_id: identifier.startsWith('CUST') ? identifier : null
+        session_id: sessionId,
+        mobile_number: role === 'Customer' ? mobileNumber : null,
+        customer_id: role === 'Customer' ? customerId : null
       };
 
       const response = await axios.post('http://localhost:8001/api/chat', payload);
@@ -69,7 +66,7 @@ function App() {
           
           <div className="flex gap-4 items-center">
             <button 
-              onClick={() => setMessages([])} 
+              onClick={() => { setMessages([]); setSessionId(crypto.randomUUID()); }} 
               className="bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 border border-rose-500/30 text-sm font-medium rounded-lg px-4 py-2 transition-all whitespace-nowrap"
             >
               New Chat
@@ -84,13 +81,22 @@ function App() {
             </select>
             
             {role === 'Customer' && (
-              <input
-                type="text"
-                placeholder="Mobile or CUST0001"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
-                className="bg-slate-900/50 border border-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 outline-none transition-all placeholder:text-slate-500"
-              />
+              <>
+                <input
+                  type="text"
+                  placeholder="Customer ID (CUST...)"
+                  value={customerId}
+                  onChange={(e) => setCustomerId(e.target.value)}
+                  className="bg-slate-900/50 border border-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 outline-none transition-all placeholder:text-slate-500 w-32"
+                />
+                <input
+                  type="text"
+                  placeholder="Mobile No."
+                  value={mobileNumber}
+                  onChange={(e) => setMobileNumber(e.target.value)}
+                  className="bg-slate-900/50 border border-slate-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 outline-none transition-all placeholder:text-slate-500 w-32"
+                />
+              </>
             )}
           </div>
         </header>

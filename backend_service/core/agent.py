@@ -10,10 +10,11 @@ from services.knowledge import KnowledgeBaseService
 logger = logging.getLogger(__name__)
 
 class AgentOrchestrator:
-    def __init__(self, db_service: DatabaseService, kb_service: KnowledgeBaseService):
+    def __init__(self, db_service: DatabaseService, kb_service: KnowledgeBaseService, memory_service):
         self.llm_client = LLMClient()
         self.db_service = db_service
         self.kb_service = kb_service
+        self.memory_service = memory_service
         
         self.tools = [
             {
@@ -63,12 +64,11 @@ Database Schema:
 5. damage_reports (report_id, booking_id, vehicle_id, reported_by, damage_category, severity, description, assessed_cost, claim_status, reported_at)
 """
 
-    def chat(self, user_message: str, role: str, history: List[Dict[str, str]] = None, mobile_number: str = None, customer_id: str = None) -> str:
+    def chat(self, user_message: str, role: str, session_id: str, mobile_number: str = None, customer_id: str = None) -> str:
         """
         Main entry point for handling a user's message.
         """
         resolved_customer_id = customer_id
-        history = history or []
         
         customer_context = ""
         if role.lower() == "customer":
@@ -87,6 +87,9 @@ Database Schema:
             except Exception as e:
                 logger.error(f"Error fetching customer context: {e}")
                 
+        # Register the session in persistent memory
+        self.memory_service.ensure_session(session_id, resolved_customer_id)
+        
         system_prompt = f"""
 You are RideWise Assist, an AI assistant for a two-wheeler and EV rental company.
 You are assisting a {role.upper()}.
@@ -108,18 +111,23 @@ CRITICAL RULES:
 {self._get_schema_prompt()}
 """
         
+        # Build messages from sliding window memory (limit=6 gives 3 pairs)
+        recent_history = self.memory_service.get_recent_messages(session_id, limit=6)
         messages = [{"role": "system", "content": system_prompt}]
-        for msg in history:
+        for msg in recent_history:
             messages.append({"role": msg["role"], "content": msg["content"]})
         messages.append({"role": "user", "content": user_message})
         
         MAX_ITERATIONS = 5
+        final_answer = "I'm sorry, I had to stop because it took too many steps to find the answer."
+        
         for _ in range(MAX_ITERATIONS):
             response_msg = self.llm_client.generate_response(messages, tools=self.tools)
             messages.append(response_msg) # Append the assistant's message (which might contain tool_calls)
             
             if not response_msg.tool_calls:
-                return response_msg.content # No more tools, this is the final answer
+                final_answer = response_msg.content # No more tools, this is the final answer
+                break
                 
             for tool_call in response_msg.tool_calls:
                 tool_name = tool_call.function.name
@@ -151,5 +159,9 @@ CRITICAL RULES:
                     "name": tool_name,
                     "content": tool_result_str
                 })
-                
-        return "I'm sorry, I had to stop because it took too many steps to find the answer."
+        
+        # Save the new exchange to persistent memory
+        self.memory_service.add_message(session_id, "user", user_message)
+        self.memory_service.add_message(session_id, "assistant", final_answer)
+        
+        return final_answer

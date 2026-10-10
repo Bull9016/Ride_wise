@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Optional
 from pydantic import BaseModel
 
+from services.memory import MemoryService
 from core.agent import AgentOrchestrator
 from services.database import DatabaseService
 from services.knowledge import KnowledgeBaseService
@@ -23,7 +24,8 @@ app.add_middleware(
 # Initialize Services
 db_service = DatabaseService()
 kb_service = KnowledgeBaseService()
-orchestrator = AgentOrchestrator(db_service, kb_service)
+memory_service = MemoryService()
+orchestrator = AgentOrchestrator(db_service, kb_service, memory_service)
 
 # Ensure FAISS index is built on startup
 @app.on_event("startup")
@@ -34,7 +36,7 @@ async def startup_event():
 class ChatRequest(BaseModel):
     role: str # "Customer" or "Support Agent"
     message: str
-    history: List[Dict[str, str]] = []
+    session_id: str
     mobile_number: Optional[str] = None
     customer_id: Optional[str] = None
 
@@ -47,9 +49,15 @@ async def chat_endpoint(request: ChatRequest):
         if request.role.lower() not in ["customer", "support agent"]:
             raise HTTPException(status_code=400, detail="Invalid role.")
             
+        if request.role.lower() == "customer":
+            if not request.customer_id or not request.mobile_number:
+                raise HTTPException(status_code=401, detail="Both Customer ID and Mobile Number are required for login.")
+            if not db_service.verify_credentials(request.customer_id, request.mobile_number):
+                raise HTTPException(status_code=401, detail="Invalid Customer ID or Mobile Number. Authentication failed.")
+            
         answer = orchestrator.chat(
             user_message=request.message,
-            history=request.history,
+            session_id=request.session_id,
             role=request.role,
             mobile_number=request.mobile_number,
             customer_id=request.customer_id
