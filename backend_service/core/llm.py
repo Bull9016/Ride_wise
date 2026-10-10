@@ -1,12 +1,12 @@
 import os
-from openai import AzureOpenAI
+from openai import OpenAI
 from dotenv import load_dotenv
 
 load_dotenv()
 
 class LLMClient:
     """
-    Wrapper for the NeoStats Azure OpenAI deployment.
+    Wrapper for the NeoStats OpenAI deployment.
     Handles tool calling and robust error catching.
     """
     def __init__(self):
@@ -17,10 +17,9 @@ class LLMClient:
         if not self.endpoint or not self.api_key:
             raise ValueError("AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY must be set in .env")
 
-        self.client = AzureOpenAI(
-            azure_endpoint=self.endpoint,
-            api_key=self.api_key,
-            api_version="2024-02-01",  # Standard Azure OpenAI API version
+        self.client = OpenAI(
+            base_url=self.endpoint,
+            api_key=self.api_key
         )
 
     def generate_response(self, messages: list, tools: list = None) -> dict:

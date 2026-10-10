@@ -70,6 +70,7 @@ Database Schema:
         resolved_customer_id = customer_id
         history = history or []
         
+        customer_context = ""
         if role.lower() == "customer":
             if mobile_number and not customer_id:
                 resolved_customer_id = self.db_service.get_customer_id_by_phone(mobile_number)
@@ -78,9 +79,18 @@ Database Schema:
             elif not resolved_customer_id:
                 return "Authentication error: Customer ID or Mobile Number required."
                 
+            try:
+                cust_data = self.db_service.execute_query(f"SELECT full_name FROM customers WHERE customer_id = '{resolved_customer_id}'")
+                if cust_data:
+                    c = cust_data[0]
+                    customer_context = f"The customer's name is {c.get('full_name')}. Greet them warmly by name in your first response."
+            except Exception as e:
+                logger.error(f"Error fetching customer context: {e}")
+                
         system_prompt = f"""
 You are RideWise Assist, an AI assistant for a two-wheeler and EV rental company.
 You are assisting a {role.upper()}.
+{customer_context}
 {f"The customer's ID is: {resolved_customer_id}. You MUST ALWAYS include WHERE customer_id = '{resolved_customer_id}' in ANY database queries." if role.lower() == 'customer' else "You have full support agent access."}
 
 You have two tools available:
@@ -88,7 +98,12 @@ You have two tools available:
 2. query_rental_policies: Use this to check rules and penalties.
 
 Use the tools to gather necessary context before answering.
-Answer factually. Do not hallucinate. If the data is not in the DB or policies, say "I don't know".
+CRITICAL RULES:
+1. NEVER offer to check or mention battery levels for non-electric vehicles (BIKE or SCOOTER). Battery percentage is ONLY applicable for EV_SCOOTER and EV_BIKE.
+2. If explicitly asked about the battery level of a petrol vehicle, state that it is a petrol vehicle and does not have a battery level.
+3. Answer factually based ONLY on tool outputs. Do not hallucinate or assume. If the data is missing, state that you don't have that information.
+4. FORMATTING: Whenever presenting data from the database (like lists of bookings, payments, vehicles, etc.), you MUST format it as a proper Markdown table using pipe `|` delimiters and `---` header separators. NEVER use raw tabs or spaces to align columns.
+5. READ-ONLY RESTRICTION: You CANNOT modify, cancel, update, or delete any data. If the user asks you to make changes (like cancelling a booking), politely decline and state that you are a read-only informational assistant.
 
 {self._get_schema_prompt()}
 """

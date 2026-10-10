@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { marked } from 'marked';
 
 function App() {
   const [role, setRole] = useState('Customer');
@@ -105,14 +106,17 @@ function App() {
           
           {messages.map((msg, idx) => (
             <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[75%] rounded-2xl px-5 py-3.5 leading-relaxed shadow-lg ${
+              <div className={`max-w-[85%] rounded-2xl px-5 py-3.5 leading-relaxed shadow-lg overflow-x-auto ${
                 msg.sender === 'user' 
                   ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-br-none' 
                   : msg.sender === 'error'
                     ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                     : 'bg-slate-700/50 border border-slate-600/50 text-slate-200 rounded-bl-none'
               }`}>
-                {msg.text.split('\n').map((line, i) => <p key={i} className="min-h-[1rem]">{line}</p>)}
+                <div 
+                  className="prose prose-invert prose-emerald max-w-none text-slate-200"
+                  dangerouslySetInnerHTML={{ __html: marked.parse(String(msg.text || "")) }}
+                />
               </div>
             </div>
           ))}
