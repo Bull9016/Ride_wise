@@ -48,11 +48,22 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (role === 'Customer' && (!customerId.trim() || !mobileNumber.trim())) {
-      alert("Please enter both your Customer ID and Mobile Number.");
-      return;
+    if (role === 'Customer') {
+      if (!customerId.trim() || !mobileNumber.trim()) {
+        alert("Please enter both your Customer ID and Mobile Number.");
+        return;
+      }
+      try {
+        await axios.post('http://localhost:8001/api/login', {
+          customer_id: customerId,
+          mobile_number: mobileNumber
+        });
+      } catch (err) {
+        alert("Invalid Customer ID or Mobile Number! Please check your credentials and try again.");
+        return;
+      }
     }
     setIsLoggedIn(true);
     setSessionId(crypto.randomUUID());

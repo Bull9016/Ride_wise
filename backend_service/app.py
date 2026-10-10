@@ -66,6 +66,16 @@ async def chat_endpoint(request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class LoginRequest(BaseModel):
+    customer_id: str
+    mobile_number: str
+
+@app.post("/api/login")
+async def login_endpoint(request: LoginRequest):
+    if not db_service.verify_credentials(request.customer_id, request.mobile_number):
+        raise HTTPException(status_code=401, detail="Invalid Customer ID or Mobile Number.")
+    return {"status": "success"}
+
 @app.get("/api/sessions")
 async def get_sessions(customer_id: Optional[str] = None):
     try:
