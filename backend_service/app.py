@@ -66,5 +66,19 @@ async def chat_endpoint(request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/api/sessions")
+async def get_sessions(customer_id: Optional[str] = None):
+    try:
+        return memory_service.get_sessions_for_user(customer_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/sessions/{session_id}")
+async def get_session_history(session_id: str):
+    try:
+        return memory_service.get_all_messages(session_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 if __name__ == "__main__":
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)

@@ -80,3 +80,36 @@ class MemoryService:
             cursor = conn.cursor()
             cursor.execute("INSERT OR REPLACE INTO memory_summaries (session_id, summary_text) VALUES (?, ?)", (session_id, summary_text))
             conn.commit()
+
+    def get_sessions_for_user(self, customer_id: Optional[str]) -> List[Dict[str, str]]:
+        """Returns a list of sessions for a user with the first message as a preview."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            if customer_id:
+                # Get sessions for this customer
+                cursor.execute("""
+                    SELECT s.session_id, s.created_at, 
+                           (SELECT content FROM messages m WHERE m.session_id = s.session_id ORDER BY timestamp ASC LIMIT 1) as preview
+                    FROM sessions s
+                    WHERE s.customer_id = ?
+                    ORDER BY s.created_at DESC
+                """, (customer_id,))
+            else:
+                # Get support agent sessions (customer_id is NULL or '')
+                cursor.execute("""
+                    SELECT s.session_id, s.created_at, 
+                           (SELECT content FROM messages m WHERE m.session_id = s.session_id ORDER BY timestamp ASC LIMIT 1) as preview
+                    FROM sessions s
+                    WHERE s.customer_id IS NULL OR s.customer_id = ''
+                    ORDER BY s.created_at DESC
+                """)
+            
+            return [{"session_id": row["session_id"], "created_at": row["created_at"], "preview": row["preview"] or "Empty Chat"} for row in cursor.fetchall()]
+            
+    def get_all_messages(self, session_id: str) -> List[Dict[str, str]]:
+        """Returns all messages for a session to load into the UI."""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT sender_role, content FROM messages WHERE session_id = ? ORDER BY timestamp ASC", (session_id,))
+            rows = cursor.fetchall()
+            return [{"sender": "user" if row["sender_role"] == "user" else "assistant", "text": row["content"]} for row in rows]

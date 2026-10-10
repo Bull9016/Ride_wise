@@ -10,9 +10,35 @@ function App() {
   
   const [sessionId, setSessionId] = useState(() => crypto.randomUUID());
   const [messages, setMessages] = useState([]);
+  const [sessions, setSessions] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchSessions();
+    }
+  }, [isLoggedIn, customerId]);
+
+  const fetchSessions = async () => {
+    try {
+      const res = await axios.get(`http://localhost:8001/api/sessions${customerId ? `?customer_id=${customerId}` : ''}`);
+      setSessions(res.data);
+    } catch (e) {
+      console.error("Failed to fetch sessions", e);
+    }
+  };
+
+  const loadSession = async (id) => {
+    try {
+      const res = await axios.get(`http://localhost:8001/api/sessions/${id}`);
+      setSessionId(id);
+      setMessages(res.data);
+    } catch (e) {
+      console.error("Failed to load session", e);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -163,9 +189,31 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[#0B1120] flex items-center justify-center p-4 font-sans text-slate-100">
-      <div className="w-full max-w-5xl h-[90vh] flex flex-col bg-slate-800/30 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="w-full max-w-6xl h-[90vh] flex bg-slate-800/30 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden">
         
-        {/* Chat Header */}
+        {/* Sidebar */}
+        <div className="w-72 bg-black/40 border-r border-white/10 flex flex-col z-20">
+          <div className="p-5 font-bold text-white border-b border-white/10 bg-black/20 flex items-center gap-3">
+            <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Chat History
+          </div>
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 scroll-smooth">
+             {sessions.length === 0 && <div className="text-slate-500 text-sm p-4 text-center">No past sessions</div>}
+             {sessions.map(s => (
+               <button 
+                  key={s.session_id} 
+                  onClick={() => loadSession(s.session_id)} 
+                  className={`w-full text-left p-3 rounded-xl transition-all text-sm truncate border ${s.session_id === sessionId ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-100' : 'bg-transparent border-transparent text-slate-400 hover:bg-white/5 hover:text-slate-200'}`}
+                >
+                 {s.preview}
+               </button>
+             ))}
+          </div>
+        </div>
+
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col relative overflow-hidden">
+          {/* Chat Header */}
         <header className="px-8 py-5 border-b border-white/10 bg-black/20 flex items-center justify-between z-10 backdrop-blur-md">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center shadow-lg">
@@ -260,6 +308,7 @@ function App() {
             </button>
           </form>
         </footer>
+        </div>
       </div>
     </div>
   );
